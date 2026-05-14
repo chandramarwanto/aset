@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoice Generator — Green Grocery 111</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-deep: #1a3a2a;
+    --green-mid: #2d6a4f;
+    --green-bright: #52b788;
+    --green-light: #b7e4c7;
+    --green-pale: #d8f3dc;
+    --cream: #fefae0;
+    --cream-dark: #f4f0d9;
+    --amber: #e9c46a;
+    --amber-deep: #c9a227;
+    --brown: #6b4c35;
+    --text-dark: #1a2e1f;
+    --text-mid: #3d5a47;
+    --text-light: #7a9e87;
+    --border: #c9e4cf;
+    --shadow: rgba(26, 58, 42, 0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--green-deep);
+    min-height: 100vh;
+    color: var(--text-dark);
+  }
+
+  /* ── APP SHELL ── */
+  .app-shell {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left-panel {
+    background: var(--cream);
+    overflow-y: auto;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .panel-header {
+    background: var(--green-deep);
+    padding: 28px 28px 22px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .logo-icon {
+    width: 42px; height: 42px;
+    background: var(--green-bright);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+
+  .brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--cream);
+    letter-spacing: -0.3px;
+  }
+
+  .brand-sub {
+    font-size: 11px;
+    color: var(--green-bright);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .panel-title {
+    color: var(--green-light);
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-top: 18px;
+  }
+
+  .panel-body {
+    padding: 24px 28px;
+  }
+
+  /* ── FORM SECTIONS ── */
+  .form-section {
+    margin-bottom: 28px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .field-group {
+    display: grid;
+    gap: 10px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mid);
+    display: block;
+    margin-bottom: 5px;
+    letter-spacing: 0.3px;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 9px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--text-dark);
+    background: white;
+    transition: all 0.2s;
+    outline: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--green-bright);
+    box-shadow: 0 0 0 3px rgba(82,183,136,0.15);
+  }
+
+  textarea { resize: vertical; min-height: 70px; }
+
+  /* ── CRM IMPORT ── */
+  .crm-import-box {
+    background: white;
+    border: 2px dashed var(--green-bright);
+    border-radius: 12px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .crm-import-box:hover {
+    background: var(--green-pale);
+    border-color: var(--green-mid);
+  }
+
+  .crm-import-box input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+    border: none; padding: 0;
+  }
+
+  .crm-icon { font-size: 28px; margin-bottom: 6px; }
+  .crm-text { font-size: 12px; font-weight: 600; color: var(--green-mid); }
+  .crm-sub { font-size: 11px; color: var(--text-light); margin-top: 3px; }
+
+  .crm-customer-select {
+    display: none;
+    margin-top: 12px;
+  }
+
+  .crm-customer-select.visible { display: block; }
+
+  /* ── ITEMS TABLE ── */
+  .items-area {
+    background: white;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    overflow: hidden;
+  }
+
+  .items-header {
+    display: grid;
+    grid-template-columns: 2fr 80px 110px 110px 36px;
+    gap: 0;
+    background: var(--green-deep);
+    padding: 10px 14px;
+  }
+
+  .items-header span {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--green-light);
+    font-weight: 600;
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 2fr 80px 110px 110px 36px;
+    gap: 0;
+    border-bottom: 1px solid var(--green-pale);
+    padding: 8px 14px;
+    align-items: center;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .item-row input {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 13px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+
+  .item-row input:focus {
+    background: var(--green-pale);
+    box-shadow: none;
+    border: none;
+  }
+
+  .item-row .subtotal {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-mid);
+    text-align: right;
+    padding-right: 8px;
+  }
+
+  .btn-remove {
+    width: 28px; height: 28px;
+    border: none; background: none;
+    cursor: pointer;
+    color: #e07070;
+    font-size: 16px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .btn-remove:hover { background: #fdeaea; }
+
+  .btn-add-item {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: var(--green-pale);
+    color: var(--green-mid);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+  }
+
+  .btn-add-item:hover { background: var(--green-light); }
+
+  /* ── TOTALS ── */
+  .totals-box {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+
+  .total-row.grand {
+    border-top: 2px solid var(--green-deep);
+    margin-top: 8px;
+    padding-top: 12px;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--green-deep);
+  }
+
+  .total-row .val {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+
+  .total-row.grand .val {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    color: var(--green-mid);
+  }
+
+  /* ── ACTIONS ── */
+  .action-group {
+    display: grid;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .btn-primary {
+    background: var(--green-deep);
+    color: var(--cream);
+    border: none;
+    padding: 13px 20px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-primary:hover {
+    background: var(--green-mid);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--shadow);
+  }
+
+  .btn-secondary {
+    background: white;
+    color: var(--green-deep);
+    border: 1.5px solid var(--border);
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-secondary:hover { background: var(--cream-dark); border-color: var(--green-bright); }
+
+  .btn-wa {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 13px 20px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-wa:hover {
+    background: #1ebe5d;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(37,211,102,0.35);
+  }
+
+  .btn-wa:disabled {
+    background: #a0d4b0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .wa-number-preview {
+    font-size: 11px;
+    color: var(--text-light);
+    text-align: center;
+    margin-top: -4px;
+    min-height: 16px;
+  }
+
+  .wa-number-preview.has-number {
+    color: #1a9e4a;
+    font-weight: 600;
+  }
+
+  /* ── RIGHT PANEL: PREVIEW ── */
+  .right-panel {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #162b1e;
+    min-height: 100vh;
+  }
+
+  .preview-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 720px;
+    margin-bottom: 24px;
+  }
+
+  .preview-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--green-bright);
+    font-weight: 600;
+  }
+
+  .preview-status {
+    font-size: 11px;
+    color: var(--text-light);
+    background: rgba(82,183,136,0.12);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(82,183,136,0.25);
+  }
+
+  /* ── INVOICE PAPER ── */
+  .invoice-paper {
+    width: 720px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .invoice-top-bar {
+    height: 6px;
+    background: linear-gradient(90deg, var(--green-deep), var(--green-bright), var(--amber));
+  }
+
+  .invoice-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 40px 48px 32px;
+    background: var(--green-deep);
+    gap: 20px;
+  }
+
+  .inv-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .inv-brand-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .inv-brand-tagline {
+    font-size: 11px;
+    color: var(--green-light);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .inv-brand-address {
+    font-size: 12px;
+    color: var(--green-light);
+    margin-top: 16px;
+    line-height: 1.7;
+  }
+
+  .inv-meta {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .inv-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 42px;
+    font-weight: 400;
+    color: var(--green-bright);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .inv-meta-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 16px;
+  }
+
+  .inv-meta-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    font-size: 12px;
+  }
+
+  .inv-meta-row .key { color: var(--text-light); }
+  .inv-meta-row .val {
+    font-family: 'DM Mono', monospace;
+    color: var(--cream);
+    min-width: 120px;
+    text-align: right;
+  }
+
+  .invoice-body {
+    padding: 36px 48px;
+  }
+
+  /* Bill To / Ship To */
+  .address-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 36px;
+  }
+
+  .address-block .addr-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .address-block .addr-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--green-deep);
+    margin-bottom: 4px;
+  }
+
+  .address-block .addr-detail {
+    font-size: 13px;
+    color: var(--text-mid);
+    line-height: 1.7;
+  }
+
+  /* Items table in invoice */
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 32px;
+  }
+
+  .inv-table thead tr {
+    background: var(--green-deep);
+  }
+
+  .inv-table thead th {
+    padding: 11px 16px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green-light);
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .inv-table thead th:last-child,
+  .inv-table thead th:nth-child(3),
+  .inv-table thead th:nth-child(4) {
+    text-align: right;
+  }
+
+  .inv-table tbody tr {
+    border-bottom: 1px solid var(--green-pale);
+  }
+
+  .inv-table tbody tr:last-child { border-bottom: none; }
+
+  .inv-table tbody td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text-dark);
+  }
+
+  .inv-table tbody td.num {
+    font-family: 'DM Mono', monospace;
+    text-align: right;
+    color: var(--text-mid);
+  }
+
+  .inv-table tbody tr:hover { background: var(--green-pale); }
+
+  /* Totals in invoice */
+  .inv-totals {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 36px;
+  }
+
+  .inv-totals-box {
+    width: 280px;
+  }
+
+  .inv-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid var(--green-pale);
+  }
+
+  .inv-total-row:last-child { border-bottom: none; }
+
+  .inv-total-row .key { color: var(--text-mid); }
+  .inv-total-row .val {
+    font-family: 'DM Mono', monospace;
+    color: var(--text-dark);
+  }
+
+  .inv-total-row.grand {
+    background: var(--green-deep);
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-top: 8px;
+    border: none;
+  }
+
+  .inv-total-row.grand .key {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--cream);
+  }
+
+  .inv-total-row.grand .val {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--amber);
+  }
+
+  /* Notes */
+  .inv-notes {
+    background: var(--green-pale);
+    border-left: 3px solid var(--green-bright);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+
+  .inv-notes strong {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green-mid);
+    margin-bottom: 4px;
+  }
+
+  /* Footer */
+  .invoice-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    padding: 24px 48px 32px;
+    background: var(--cream-dark);
+    border-top: 1px solid var(--border);
+  }
+
+  .footer-block { font-size: 11px; color: var(--text-light); line-height: 1.7; }
+  .footer-block strong {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-mid);
+    margin-bottom: 6px;
+  }
+
+  .footer-qr {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .qr-placeholder {
+    width: 56px; height: 56px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: white;
+  }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .status-badge.unpaid { background: #fff3cd; color: #856404; }
+  .status-badge.paid { background: #d1fae5; color: #065f46; }
+  .status-badge.overdue { background: #fee2e2; color: #991b1b; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    body { background: white; }
+    .app-shell { display: block; }
+    .left-panel, .preview-toolbar { display: none !important; }
+    .right-panel { background: white; padding: 0; }
+    .invoice-paper { box-shadow: none; width: 100%; border-radius: 0; }
+    .invoice-top-bar { display: none; }
+  }
+
+  /* ── NOTIFICATION ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--green-deep);
+    color: var(--cream);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 1000;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="left-panel">
+    <div class="panel-header">
+      <div class="brand-logo">
+        <div class="logo-icon">🥬</div>
+        <div>
+          <div class="brand-name">GreenGrocery 111</div>
+          <div class="brand-sub">Invoice Generator</div>
+        </div>
+      </div>
+      <div class="panel-title">Buat Invoice Baru</div>
+    </div>
+
+    <div class="panel-body">
+
+      <!-- CRM IMPORT -->
+      <div class="form-section">
+        <div class="section-label">Import CRM</div>
+        <div class="crm-import-box" id="crmDropZone">
+          <input type="file" id="crmFile" accept=".csv,.xlsx,.xls" onchange="loadCRM(event)">
+          <div class="crm-icon">📊</div>
+          <div class="crm-text">Upload File CRM / Spreadsheet</div>
+          <div class="crm-sub">Format: CSV atau Excel (.xlsx)</div>
+        </div>
+        <div class="crm-customer-select" id="crmSelectArea">
+          <label>Pilih Pelanggan dari CRM</label>
+          <select id="crmSelect" onchange="fillCustomer()">
+            <option value="">— Pilih pelanggan —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- INVOICE INFO -->
+      <div class="form-section">
+        <div class="section-label">Detail Invoice</div>
+        <div class="field-group">
+          <div class="field-row">
+            <div>
+              <label>No. Invoice</label>
+              <input type="text" id="invNo" placeholder="INV-2024-001" value="">
+            </div>
+            <div>
+              <label>Status</label>
+              <select id="invStatus">
+                <option value="unpaid">Belum Dibayar</option>
+                <option value="paid">Lunas</option>
+                <option value="overdue">Jatuh Tempo</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label>Tanggal Invoice</label>
+              <input type="date" id="invDate">
+            </div>
+            <div>
+              <label>Jatuh Tempo</label>
+              <input type="date" id="invDue">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMER INFO -->
+      <div class="form-section">
+        <div class="section-label">Data Pelanggan</div>
+        <div class="field-group">
+          <div>
+            <label>Nama Pelanggan / Perusahaan</label>
+            <input type="text" id="custName" placeholder="PT. Sinar Jaya" oninput="updatePreview()">
+          </div>
+          <div>
+            <label>Kontak / PIC</label>
+            <input type="text" id="custContact" placeholder="Budi Santoso" oninput="updatePreview()">
+          </div>
+          <div>
+            <label>Telepon / WhatsApp</label>
+            <input type="text" id="custPhone" placeholder="08123456789" oninput="updatePreview();updateWAPreview()">
+          </div>
+          <div>
+            <label>Alamat</label>
+            <textarea id="custAddress" placeholder="Jl. Merdeka No. 1, Bandung" oninput="updatePreview()"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATATAN -->
+      <div class="form-section">
+        <div class="section-label">Catatan</div>
+        <textarea id="invNotes" placeholder="Terima kasih atas kepercayaan Anda. Pembayaran melalui transfer BCA 1234567890 a/n Green Grocery 111." oninput="updatePreview()"></textarea>
+      </div>
+
+      <!-- ITEMS -->
+      <div class="form-section">
+        <div class="section-label">Item / Produk</div>
+        <div class="items-area" id="itemsArea">
+          <div class="items-header">
+            <span>Produk</span>
+            <span>Qty</span>
+            <span style="text-align:right">Harga</span>
+            <span style="text-align:right">Subtotal</span>
+            <span></span>
+          </div>
+          <div id="itemsList"></div>
+          <button class="btn-add-item" onclick="addItem()">+ Tambah Item</button>
+        </div>
+      </div>
+
+      <!-- DISKON & PAJAK -->
+      <div class="form-section">
+        <div class="section-label">Diskon & Pajak</div>
+        <div class="totals-box">
+          <div class="field-row" style="margin-bottom:10px">
+            <div>
+              <label>Diskon (%)</label>
+              <input type="number" id="discount" value="0" min="0" max="100" oninput="updateTotals()">
+            </div>
+            <div>
+              <label>PPN (%)</label>
+              <input type="number" id="ppn" value="11" min="0" max="100" oninput="updateTotals()">
+            </div>
+          </div>
+          <div class="total-row">
+            <span>Subtotal</span>
+            <span class="val" id="subtotalDisp">Rp 0</span>
+          </div>
+          <div class="total-row">
+            <span>Diskon</span>
+            <span class="val" id="discountDisp">- Rp 0</span>
+          </div>
+          <div class="total-row">
+            <span>PPN</span>
+            <span class="val" id="ppnDisp">Rp 0</span>
+          </div>
+          <div class="total-row grand">
+            <span>TOTAL</span>
+            <span class="val" id="grandTotalDisp">Rp 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="form-section">
+        <div class="section-label">Aksi</div>
+        <div class="action-group">
+          <button class="btn-wa" id="btnWA" onclick="kirimWA()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+            Kirim via WhatsApp
+          </button>
+          <div class="wa-number-preview" id="waNumberPreview">Pilih pelanggan untuk melihat nomor WA</div>
+          <button class="btn-primary" onclick="window.print()">
+            🖨️ Print / Simpan PDF
+          </button>
+          <button class="btn-secondary" onclick="exportCSV()">
+            📥 Export CSV
+          </button>
+          <button class="btn-secondary" onclick="resetForm()">
+            🔄 Invoice Baru
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ RIGHT PANEL: PREVIEW ══ -->
+  <div class="right-panel">
+    <div class="preview-toolbar">
+      <span class="preview-label">Preview Invoice</span>
+      <span class="preview-status" id="previewStatus">Live Preview</span>
+    </div>
+
+    <div class="invoice-paper" id="invoicePaper">
+      <div class="invoice-top-bar"></div>
+
+      <!-- INVOICE HEADER -->
+      <div class="invoice-header">
+        <div class="inv-brand">
+          <div style="font-size:28px;margin-bottom:4px">🥬</div>
+          <div class="inv-brand-name">GreenGrocery<br>111</div>
+          <div class="inv-brand-tagline">Fresh · Local · Natural</div>
+          <div class="inv-brand-address">
+            Jl. Sayuran Segar No. 111<br>
+            Bandung, Jawa Barat 40123<br>
+            📞 0812-3456-7890<br>
+            ✉️ hello@gg111.co.id
+          </div>
+        </div>
+        <div class="inv-meta">
+          <div class="inv-title">Invoice</div>
+          <div class="inv-meta-rows">
+            <div class="inv-meta-row">
+              <span class="key">No. Invoice</span>
+              <span class="val" id="previewInvNo">—</span>
+            </div>
+            <div class="inv-meta-row">
+              <span class="key">Tanggal</span>
+              <span class="val" id="previewDate">—</span>
+            </div>
+            <div class="inv-meta-row">
+              <span class="key">Jatuh Tempo</span>
+              <span class="val" id="previewDue">—</span>
+            </div>
+            <div class="inv-meta-row" style="margin-top:8px">
+              <span id="previewStatus2" class="status-badge unpaid">● Belum Dibayar</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVOICE BODY -->
+      <div class="invoice-body">
+
+        <!-- BILL TO -->
+        <div class="address-row">
+          <div class="address-block">
+            <div class="addr-label">Tagihan Kepada</div>
+            <div class="addr-name" id="previewCustName">—</div>
+            <div class="addr-detail" id="previewCustContact">—</div>
+            <div class="addr-detail" id="previewCustAddress">—</div>
+          </div>
+          <div class="address-block">
+            <div class="addr-label">Dari</div>
+            <div class="addr-name">Green Grocery 111</div>
+            <div class="addr-detail">
+              Jl. Sayuran Segar No. 111<br>
+              Bandung, Jawa Barat 40123<br>
+              NPWP: 00.000.000.0-000.000
+            </div>
+          </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Deskripsi Produk</th>
+              <th style="width:60px">Qty</th>
+              <th style="width:120px;text-align:right">Harga Satuan</th>
+              <th style="width:130px;text-align:right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="previewItems">
+            <tr>
+              <td colspan="5" style="text-align:center;color:#aaa;padding:24px;font-size:13px">
+                Belum ada item. Tambahkan produk di panel kiri.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- TOTALS -->
+        <div class="inv-totals">
+          <div class="inv-totals-box">
+            <div class="inv-total-row">
+              <span class="key">Subtotal</span>
+              <span class="val" id="previewSubtotal">Rp 0</span>
+            </div>
+            <div class="inv-total-row">
+              <span class="key" id="previewDiscLabel">Diskon (0%)</span>
+              <span class="val" id="previewDiscount">- Rp 0</span>
+            </div>
+            <div class="inv-total-row">
+              <span class="key" id="previewPPNLabel">PPN (11%)</span>
+              <span class="val" id="previewPPN">Rp 0</span>
+            </div>
+            <div class="inv-total-row grand">
+              <span class="key">Total</span>
+              <span class="val" id="previewGrand">Rp 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTES -->
+        <div class="inv-notes" id="previewNotes" style="display:none">
+          <strong>Catatan</strong>
+          <span id="previewNotesText"></span>
+        </div>
+
+      </div>
+
+      <!-- INVOICE FOOTER -->
+      <div class="invoice-footer">
+        <div class="footer-block">
+          <strong>Cara Pembayaran</strong>
+          Transfer Bank BCA<br>
+          No. Rek: 1234-5678-90<br>
+          A/n: Green Grocery 111<br>
+          <br>
+          GoPay / OVO / Dana<br>
+          0812-3456-7890
+        </div>
+        <div class="footer-block">
+          <strong>Syarat & Ketentuan</strong>
+          Pembayaran paling lambat<br>
+          sesuai tanggal jatuh tempo.<br>
+          Denda 1.5% per bulan<br>
+          untuk keterlambatan.<br>
+          <br>
+          Barang yang sudah dibeli<br>
+          tidak dapat dikembalikan.
+        </div>
+        <div class="footer-block footer-qr" style="text-align:center;align-items:center">
+          <strong>Konfirmasi</strong>
+          <div class="qr-placeholder">📱</div>
+          <div style="font-size:10px;margin-top:4px">Scan untuk konfirmasi</div>
+          <div style="font-size:10px;color:var(--green-mid);font-weight:600;margin-top:8px">
+            Terima kasih! 🌿
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══ STATE ══
+let items = [];
+let invCounter = 1;
+let crmData = [];
+
+// ══ INIT ══
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  const due = new Date(); due.setDate(due.getDate() + 14);
+  const fmt = d => d.toISOString().split('T')[0];
+
+  document.getElementById('invDate').value = fmt(today);
+  document.getElementById('invDue').value = fmt(due);
+
+  const yr = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  document.getElementById('invNo').value = `INV-${yr}${m}${d}-001`;
+
+  // auto-update on change
+  ['invNo','invDate','invDue','invStatus'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
+    document.getElementById(id).addEventListener('change', updatePreview);
+  });
+
+  addItem();
+  updatePreview();
+  updateWAPreview();
+});
+
+// ══ ITEMS ══
+function addItem(name='', qty=1, price=0) {
+  const id = Date.now();
+  items.push({ id, name, qty, price });
+  renderItems();
+}
+
+function removeItem(id) {
+  items = items.filter(i => i.id !== id);
+  renderItems();
+  updateTotals();
+  updatePreview();
+}
+
+function updateItem(id, field, value) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item[field] = field === 'name' ? value : parseFloat(value) || 0;
+  renderItems();
+  updateTotals();
+  updatePreview();
+}
+
+function renderItems() {
+  const list = document.getElementById('itemsList');
+  list.innerHTML = items.map(item => {
+    const sub = (item.qty * item.price);
+    return `
+    <div class="item-row">
+      <input type="text" value="${escHtml(item.name)}" placeholder="Nama produk..."
+        onchange="updateItem(${item.id},'name',this.value)">
+      <input type="number" value="${item.qty}" min="0"
+        onchange="updateItem(${item.id},'qty',this.value)" style="text-align:center">
+      <input type="number" value="${item.price}" min="0"
+        onchange="updateItem(${item.id},'price',this.value)" style="text-align:right">
+      <div class="subtotal">${fmtRp(sub)}</div>
+      <button class="btn-remove" onclick="removeItem(${item.id})">×</button>
+    </div>`;
+  }).join('');
+}
+
+// ══ TOTALS ══
+function calcTotals() {
+  const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const discPct = parseFloat(document.getElementById('discount').value) || 0;
+  const ppnPct = parseFloat(document.getElementById('ppn').value) || 0;
+  const discAmt = subtotal * discPct / 100;
+  const afterDisc = subtotal - discAmt;
+  const ppnAmt = afterDisc * ppnPct / 100;
+  const grand = afterDisc + ppnAmt;
+  return { subtotal, discPct, discAmt, ppnPct, ppnAmt, grand };
+}
+
+function updateTotals() {
+  const { subtotal, discPct, discAmt, ppnPct, ppnAmt, grand } = calcTotals();
+  document.getElementById('subtotalDisp').textContent = fmtRp(subtotal);
+  document.getElementById('discountDisp').textContent = `- ${fmtRp(discAmt)}`;
+  document.getElementById('ppnDisp').textContent = fmtRp(ppnAmt);
+  document.getElementById('grandTotalDisp').textContent = fmtRp(grand);
+  updatePreview();
+}
+
+// ══ PREVIEW ══
+function updatePreview() {
+  const invNo = document.getElementById('invNo').value;
+  const invDate = document.getElementById('invDate').value;
+  const invDue = document.getElementById('invDue').value;
+  const status = document.getElementById('invStatus').value;
+  const custName = document.getElementById('custName').value;
+  const custContact = document.getElementById('custContact').value;
+  const custPhone = document.getElementById('custPhone').value;
+  const custAddress = document.getElementById('custAddress').value;
+  const notes = document.getElementById('invNotes').value;
+
+  // Meta
+  document.getElementById('previewInvNo').textContent = invNo || '—';
+  document.getElementById('previewDate').textContent = invDate ? fmtDate(invDate) : '—';
+  document.getElementById('previewDue').textContent = invDue ? fmtDate(invDue) : '—';
+
+  // Status badge
+  const statusBadge = document.getElementById('previewStatus2');
+  const statusMap = {
+    unpaid: { cls: 'unpaid', label: '● Belum Dibayar' },
+    paid: { cls: 'paid', label: '✓ Lunas' },
+    overdue: { cls: 'overdue', label: '⚠ Jatuh Tempo' }
+  };
+  const s = statusMap[status] || statusMap.unpaid;
+  statusBadge.className = `status-badge ${s.cls}`;
+  statusBadge.textContent = s.label;
+
+  // Customer
+  document.getElementById('previewCustName').textContent = custName || '—';
+  let contactLine = [custContact, custPhone].filter(Boolean).join(' · ');
+  document.getElementById('previewCustContact').textContent = contactLine || '';
+  document.getElementById('previewCustAddress').textContent = custAddress || '';
+
+  // Items
+  const tbody = document.getElementById('previewItems');
+  if (items.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#aaa;padding:24px;font-size:13px">Belum ada item.</td></tr>`;
+  } else {
+    tbody.innerHTML = items.map((item, idx) => {
+      const sub = item.qty * item.price;
+      return `<tr>
+        <td style="color:var(--text-light);font-size:11px">${idx+1}</td>
+        <td>${escHtml(item.name) || '<em style="color:#ccc">—</em>'}</td>
+        <td class="num">${item.qty}</td>
+        <td class="num">${fmtRp(item.price)}</td>
+        <td class="num">${fmtRp(sub)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Totals
+  const { subtotal, discPct, discAmt, ppnPct, ppnAmt, grand } = calcTotals();
+  document.getElementById('previewSubtotal').textContent = fmtRp(subtotal);
+  document.getElementById('previewDiscLabel').textContent = `Diskon (${discPct}%)`;
+  document.getElementById('previewDiscount').textContent = `- ${fmtRp(discAmt)}`;
+  document.getElementById('previewPPNLabel').textContent = `PPN (${ppnPct}%)`;
+  document.getElementById('previewPPN').textContent = fmtRp(ppnAmt);
+  document.getElementById('previewGrand').textContent = fmtRp(grand);
+
+  // Notes
+  const notesEl = document.getElementById('previewNotes');
+  if (notes.trim()) {
+    notesEl.style.display = 'block';
+    document.getElementById('previewNotesText').textContent = notes;
+  } else {
+    notesEl.style.display = 'none';
+  }
+}
+
+// ══ CRM / CSV IMPORT ══
+function loadCRM(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const rows = parseCSV(text);
+    if (rows.length < 2) { showToast('❌ File CSV kosong atau format tidak dikenal'); return; }
+
+    const headers = rows[0].map(h => h.toLowerCase().trim());
+    crmData = rows.slice(1).filter(r => r.some(c => c.trim())).map(row => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = (row[i] || '').trim(); });
+      return obj;
+    });
+
+    const sel = document.getElementById('crmSelect');
+    sel.innerHTML = '<option value="">— Pilih pelanggan —</option>';
+    crmData.forEach((cust, idx) => {
+      const nameKey = headers.find(h => h.includes('nama') || h.includes('name') || h.includes('perusahaan') || h.includes('company'));
+      const label = nameKey ? (cust[nameKey] || `Baris ${idx+1}`) : `Baris ${idx+1}`;
+      sel.innerHTML += `<option value="${idx}">${escHtml(label)}</option>`;
+    });
+
+    document.getElementById('crmSelectArea').classList.add('visible');
+    document.getElementById('crmDropZone').style.borderColor = 'var(--green-bright)';
+    document.getElementById('crmDropZone').style.background = 'var(--green-pale)';
+    showToast(`✅ ${crmData.length} pelanggan berhasil dimuat dari CRM`);
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function fillCustomer() {
+  const idx = document.getElementById('crmSelect').value;
+  if (idx === '') return;
+  const cust = crmData[parseInt(idx)];
+  if (!cust) return;
+
+  // Smart field mapping
+  const find = (...keys) => {
+    for (const k of keys) {
+      const match = Object.keys(cust).find(h => h.includes(k));
+      if (match && cust[match]) return cust[match];
+    }
+    return '';
+  };
+
+  document.getElementById('custName').value = find('nama','name','perusahaan','company','toko','customer');
+  document.getElementById('custContact').value = find('pic','kontak','contact','person');
+  document.getElementById('custPhone').value = find('phone','telp','hp','wa','whatsapp','no.');
+  document.getElementById('custAddress').value = find('alamat','address','kota','city');
+
+  updatePreview();
+  showToast('✅ Data pelanggan berhasil diisi dari CRM');
+  updateWAPreview();
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/);
+  return lines.map(line => {
+    const result = [];
+    let cur = ''; let inQuote = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { inQuote = !inQuote; }
+      else if ((ch === ',' || ch === ';') && !inQuote) { result.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+    result.push(cur);
+    return result;
+  }).filter(r => r.length > 1 || r[0]);
+}
+
+// ══ EXPORT CSV ══
+function exportCSV() {
+  const invNo = document.getElementById('invNo').value;
+  const invDate = document.getElementById('invDate').value;
+  const custName = document.getElementById('custName').value;
+  const { subtotal, discAmt, ppnAmt, grand } = calcTotals();
+
+  let csv = 'No Invoice,Tanggal,Pelanggan,Produk,Qty,Harga Satuan,Subtotal\n';
+  items.forEach(item => {
+    csv += `"${invNo}","${invDate}","${custName}","${item.name}","${item.qty}","${item.price}","${item.qty * item.price}"\n`;
+  });
+  csv += `\n,,,,,"Subtotal","${subtotal}"\n`;
+  csv += `,,,,,"Diskon","${discAmt}"\n`;
+  csv += `,,,,,"PPN","${ppnAmt}"\n`;
+  csv += `,,,,,"TOTAL","${grand}"\n`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${invNo || 'invoice'}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 Invoice berhasil di-export ke CSV');
+}
+
+// ══ RESET ══
+function resetForm() {
+  if (!confirm('Reset semua data dan buat invoice baru?')) return;
+  items = [];
+  document.getElementById('custName').value = '';
+  document.getElementById('custContact').value = '';
+  document.getElementById('custPhone').value = '';
+  document.getElementById('custAddress').value = '';
+  document.getElementById('invNotes').value = '';
+  document.getElementById('discount').value = 0;
+  document.getElementById('ppn').value = 11;
+  document.getElementById('invStatus').value = 'unpaid';
+
+  // Bump invoice number
+  const cur = document.getElementById('invNo').value;
+  const match = cur.match(/(\d+)$/);
+  if (match) {
+    const next = String(parseInt(match[1]) + 1).padStart(match[1].length, '0');
+    document.getElementById('invNo').value = cur.replace(/\d+$/, next);
+  }
+
+  addItem();
+  renderItems();
+  updateTotals();
+  updatePreview();
+  showToast('🔄 Siap untuk invoice baru');
+}
+
+// ══ WHATSAPP ══
+function formatWANumber(raw) {
+  // Bersihkan semua karakter non-digit
+  let num = raw.replace(/\D/g, '');
+  // Konversi 08xx → 628xx
+  if (num.startsWith('0')) num = '62' + num.slice(1);
+  // Kalau belum ada kode negara, tambahkan 62
+  if (!num.startsWith('62') && !num.startsWith('1') && num.length >= 9) num = '62' + num;
+  return num;
+}
+
+function updateWAPreview() {
+  const phone = document.getElementById('custPhone').value.trim();
+  const preview = document.getElementById('waNumberPreview');
+  const btn = document.getElementById('btnWA');
+  if (phone) {
+    const formatted = formatWANumber(phone);
+    preview.textContent = `📱 Kirim ke: +${formatted}`;
+    preview.className = 'wa-number-preview has-number';
+    btn.disabled = false;
+  } else {
+    preview.textContent = 'Isi nomor telepon pelanggan terlebih dahulu';
+    preview.className = 'wa-number-preview';
+    btn.disabled = true;
+  }
+}
+
+function kirimWA() {
+  const phone = document.getElementById('custPhone').value.trim();
+  if (!phone) { showToast('❌ Nomor WhatsApp pelanggan belum diisi'); return; }
+
+  const waNum = formatWANumber(phone);
+  const invNo  = document.getElementById('invNo').value || '—';
+  const invDate = document.getElementById('invDate').value;
+  const invDue  = document.getElementById('invDue').value;
+  const custName = document.getElementById('custName').value || '—';
+  const { grand } = calcTotals();
+
+  // Susun ringkasan item
+  const itemLines = items
+    .filter(i => i.name)
+    .map((i, idx) => `  ${idx+1}. ${i.name} (${i.qty} × ${fmtRp(i.price)}) = ${fmtRp(i.qty * i.price)}`)
+    .join('\n');
+
+  const msg =
+`Halo ${custName}, 👋
+
+Berikut detail *Invoice* dari *Green Grocery 111*:
+
+📄 *No. Invoice:* ${invNo}
+📅 *Tanggal:* ${invDate ? fmtDate(invDate) : '—'}
+⏳ *Jatuh Tempo:* ${invDue ? fmtDate(invDue) : '—'}
+
+🛒 *Rincian Pesanan:*
+${itemLines || '  (tidak ada item)'}
+
+💰 *Total Tagihan: ${fmtRp(grand)}*
+
+Mohon segera lakukan pembayaran sebelum jatuh tempo.
+Transfer ke BCA 1234-5678-90 a/n Green Grocery 111.
+
+Terima kasih atas kepercayaan Anda! 🌿
+_Green Grocery 111_`;
+
+  const encoded = encodeURIComponent(msg);
+  const url = `https://wa.me/${waNum}?text=${encoded}`;
+  window.open(url, '_blank');
+  showToast(`✅ Membuka WhatsApp ke +${waNum}`);
+}
+
+
+function fmtRp(num) {
+  return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+}
+
+function fmtDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
